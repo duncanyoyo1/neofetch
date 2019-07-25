@@ -449,6 +449,7 @@ disk_subtitle="mount"
 # exaile
 # gnome-music
 # gmusicbrowser
+# gogglesmm
 # guayadeque
 # iTunes
 # juk
@@ -465,9 +466,11 @@ disk_subtitle="mount"
 # sayonara
 # smplayer
 # spotify
+# strawberry
 # tomahawk
 # vlc
 # xmms2d
+# xnoise
 # yarock
 music_player="auto"
 
@@ -563,7 +566,7 @@ separator=":"
 # Color block range
 # The range of colors to print.
 #
-# Default:  '0', '7'
+# Default:  '0', '15'
 # Values:   'num'
 # Flag:     --block_range
 #
@@ -574,7 +577,7 @@ separator=":"
 #
 # Display colors 0-15 in the blocks. (16 colors)
 # neofetch --block_range 0 15
-block_range=(0 7)
+block_range=(0 15)
 
 # Toggle color blocks
 #
@@ -874,16 +877,27 @@ get_distro() {
                 esac
                 distro="$(lsb_release "$lsb_flags")"
 
+            elif [[ -f "/etc/os-release" || \
+                    -f "/usr/lib/os-release" || \
+                    -f "/etc/openwrt_release" ]]; then
+                files=("/etc/os-release" "/usr/lib/os-release" "/etc/openwrt_release")
+
+                # Source the os-release file
+                for file in "${files[@]}"; do
+                    source "$file" && break
+                done
+
+                # Format the distro name.
+                case "$distro_shorthand" in
+                    "on")   distro="${NAME:-${DISTRIB_ID}} ${VERSION_ID:-${DISTRIB_RELEASE}}" ;;
+                    "tiny") distro="${NAME:-${DISTRIB_ID:-${TAILS_PRODUCT_NAME}}}" ;;
+                    "off")  distro="${PRETTY_NAME:-${DISTRIB_DESCRIPTION}} ${UBUNTU_CODENAME}" ;;
+                esac
+
             elif [[ -f "/etc/GoboLinuxVersion" ]]; then
                 case "$distro_shorthand" in
                     "on" | "tiny") distro="GoboLinux" ;;
                     *) distro="GoboLinux $(< /etc/GoboLinuxVersion)"
-                esac
-
-            elif type -p guix >/dev/null; then
-                case "$distro_shorthand" in
-                    "on" | "tiny") distro="GuixSD" ;;
-                    *) distro="GuixSD $(guix system -V | awk 'NR==1{printf $5}')"
                 esac
 
             elif type -p crux >/dev/null; then
@@ -909,22 +923,12 @@ get_distro() {
             elif [[ -f "/etc/lsb-release" && "$(< /etc/lsb-release)" == *CHROMEOS* ]]; then
                 distro="$(awk -F '=' '/NAME|VERSION/ {printf $2 " "}' /etc/lsb-release)"
 
-            elif [[ -f "/etc/os-release" || \
-                    -f "/usr/lib/os-release" || \
-                    -f "/etc/openwrt_release" ]]; then
-                files=("/etc/os-release" "/usr/lib/os-release" "/etc/openwrt_release")
-
-                # Source the os-release file
-                for file in "${files[@]}"; do
-                    source "$file" && break
-                done
-
-                # Format the distro name.
+            elif type -p guix >/dev/null; then
                 case "$distro_shorthand" in
-                    "on")   distro="${NAME:-${DISTRIB_ID}} ${VERSION_ID:-${DISTRIB_RELEASE}}" ;;
-                    "tiny") distro="${NAME:-${DISTRIB_ID:-${TAILS_PRODUCT_NAME}}}" ;;
-                    "off")  distro="${PRETTY_NAME:-${DISTRIB_DESCRIPTION}} ${UBUNTU_CODENAME}" ;;
+                    "on" | "tiny") distro="GuixSD" ;;
+                    *) distro="GuixSD $(guix system -V | awk 'NR==1{printf $5}')"
                 esac
+
             else
                 for release_file in /etc/*-release; do
                     distro+="$(< "$release_file")"
@@ -1081,24 +1085,26 @@ get_model() {
 
         "iPhone OS")
             case "$kernel_machine" in
-                "iPad1,1"):     "iPad" ;;
-                "iPad2,"[1-4]): "iPad 2" ;;
-                "iPad3,"[1-3]): "iPad 3" ;;
-                "iPad3,"[4-6]): "iPad 4" ;;
-                "iPad4,"[1-3]): "iPad Air" ;;
-                "iPad5,"[3-4]): "iPad Air 2" ;;
-                "iPad6,"[7-8]): "iPad Pro (12.9 Inch)" ;;
-                "iPad6,"[3-4]): "iPad Pro (9.7 Inch)" ;;
-                "iPad7,"[1-2]): "iPad Pro 2 (12.9 Inch)" ;;
-                "iPad7,"[3-4]): "iPad Pro (10.5 Inch)" ;;
-                "iPad2,"[5-7]): "iPad mini" ;;
-                "iPad4,"[4-6]): "iPad mini 2" ;;
-                "iPad4,"[7-9]): "iPad mini 3" ;;
-                "iPad5,"[1-2]): "iPad mini 4" ;;
-
-                "iPad6,11" | "iPad 6,12")
-                    : "iPad 5"
-                ;;
+                "iPad1,1"):      "iPad" ;;
+                "iPad2,"[1-4]):  "iPad 2" ;;
+                "iPad3,"[1-3]):  "iPad 3" ;;
+                "iPad3,"[4-6]):  "iPad 4" ;;
+                "iPad6,1"[12]):  "iPad 5" ;;
+                "iPad7,"[5-6]):  "iPad 6" ;;
+                "iPad4,"[1-3]):  "iPad Air" ;;
+                "iPad5,"[3-4]):  "iPad Air 2" ;;
+                "iPad11,"[3-4]): "iPad Air 3" ;;
+                "iPad6,"[7-8]):  "iPad Pro (12.9 Inch)" ;;
+                "iPad6,"[3-4]):  "iPad Pro (9.7 Inch)" ;;
+                "iPad7,"[1-2]):  "iPad Pro 2 (12.9 Inch)" ;;
+                "iPad7,"[3-4]):  "iPad Pro (10.5 Inch)" ;;
+                "iPad8,"[1-4]):  "iPad Pro (11 Inch)" ;;
+                "iPad8,"[5-8]):  "iPad Pro 3 (12.9 Inch)" ;;
+                "iPad2,"[5-7]):  "iPad mini" ;;
+                "iPad4,"[4-6]):  "iPad mini 2" ;;
+                "iPad4,"[7-9]):  "iPad mini 3" ;;
+                "iPad5,"[1-2]):  "iPad mini 4" ;;
+                "iPad11,"[1-2]): "iPad mini 5" ;;
 
                 "iPhone1,1"):     "iPhone" ;;
                 "iPhone1,2"):     "iPhone 3G" ;;
@@ -1113,12 +1119,14 @@ get_model() {
                 "iPhone8,1"):     "iPhone 6s" ;;
                 "iPhone8,2"):     "iPhone 6s Plus" ;;
                 "iPhone8,4"):     "iPhone SE" ;;
-
-                "iPhone9,1"  | "iPhone9,3"):  "iPhone 7" ;;
-                "iPhone9,2"  | "iPhone9,4"):  "iPhone 7 Plus" ;;
-                "iPhone10,1" | "iPhone10,4"): "iPhone 8" ;;
-                "iPhone10,2" | "iPhone10,5"): "iPhone 8 Plus" ;;
-                "iPhone10,3" | "iPhone10,6"): "iPhone X" ;;
+                "iPhone9,"[13]):  "iPhone 7" ;;
+                "iPhone9,"[24]):  "iPhone 7 Plus" ;;
+                "iPhone10,"[14]): "iPhone 8" ;;
+                "iPhone10,"[25]): "iPhone 8 Plus" ;;
+                "iPhone10,"[36]): "iPhone X" ;;
+                "iPhone11,2"):    "iPhone XS" ;;
+                "iPhone11,"[46]): "iPhone XS Max" ;;
+                "iPhone11,8"):    "iPhone XR" ;;
 
                 "iPod1,1"): "iPod touch" ;;
                 "ipod2,1"): "iPod touch 2G" ;;
@@ -1184,6 +1192,12 @@ get_kernel() {
     # Since these OS are integrated systems, it's better to skip this function altogether
     [[ "$os" =~ (AIX|IRIX) ]] && return
 
+    # Haiku uses 'uname -v' and not - 'uname -r'.
+    [[ "$os" == Haiku ]] && {
+        kernel=$(uname -v)
+        return
+    }
+
     case "$kernel_shorthand" in
         "on")  kernel="$kernel_version" ;;
         "off") kernel="$kernel_name $kernel_version" ;;
@@ -1211,8 +1225,14 @@ get_uptime() {
             # Get uptime in seconds.
             case "$os" in
                 "Linux" | "Windows" | "MINIX")
-                    seconds="$(< /proc/uptime)"
-                    seconds="${seconds/.*}"
+                    if [[ -r /proc/uptime ]]; then
+                        seconds="$(< /proc/uptime)"
+                        seconds="${seconds/.*}"
+                    else
+                        boot="$(date -d"$(uptime -s)" +%s)"
+                        now="$(date +%s)"
+                        seconds="$((now - boot))"
+                    fi
                 ;;
 
                 "Mac OS X" | "iPhone OS" | "BSD" | "FreeMiNT")
@@ -1304,6 +1324,7 @@ get_packages() {
     case "$os" in
         "Linux" | "BSD" | "iPhone OS" | "Solaris")
             # Package Manager Programs.
+            has "kiss"       && tot kiss l
             has "pacman-key" && tot pacman -Qq --color never
             has "dpkg"       && tot dpkg-query -f '.\n' -W
             has "rpm"        && tot rpm -qa
@@ -1324,26 +1345,37 @@ get_packages() {
             # $br_prefix is fixed and won't change based on user input so this is safe either way.
             # shellcheck disable=SC2086
             {
+            shopt -s nullglob
             has "emerge"  && dir ${br_prefix}/var/db/pkg/*/*/
-            has "nix-env" && dir ${br_prefix}/nix/store/*/
-            has "guix"    && dir ${br_prefix}/gnu/store/*/
             has "Compile" && dir ${br_prefix}/Programs/*/
             has "eopkg"   && dir ${br_prefix}/var/lib/eopkg/package/*
             has "crew"    && dir ${br_prefix}/usr/local/etc/crew/meta/*.filelist
             has "pkgtool" && dir ${br_prefix}/var/log/packages/*
+            has "kagami"  && dir ${br_prefix}/var/lib/kagami/pkgs/*
             has "cave"    && dir ${br_prefix}/var/db/paludis/repositories/cross-installed/*/data/*/ \
                                  ${br_prefix}/var/db/paludis/repositories/installed/data/*/
+            shopt -u nullglob
             }
 
             # Other (Needs complex command)
             has "kpm-pkg" && ((packages+="$(kpm  --get-selections | grep -cv deinstall$)"))
+
+            if has "guix"; then
+                manager="guix-system" && tot guix package -p "/run/current-system/profile" -I
+                manager="guix-user" && tot guix package -I
+            fi
+
+            if has "nix-store"; then
+                manager="nix-system" && tot nix-store -q --requisites "/run/current-system/sw"
+                manager="nix-user" && tot nix-store -q --requisites "$HOME/.nix-profile"
+            fi
 
             # pkginfo is also the name of a python package manager which is painfully slow.
             # TODO: Fix this somehow.
             has pkginfo && tot pkginfo -i
 
             case "$kernel_name" in
-                "FreeBSD") has "pkg" && tot pkg info ;;
+                "FreeBSD"|"DragonFly") has "pkg" && tot pkg info ;;
                 *)
                     has "pkg" && dir /var/db/pkg/*
 
@@ -1366,7 +1398,11 @@ get_packages() {
             has "port"    && tot port installed && ((packages-=1))
             has "brew"    && dir /usr/local/Cellar/*
             has "pkgin"   && tot pkgin list
-            has "nix-env" && dir /nix/store/*/
+
+            if has "nix-store"; then
+                manager="nix-system" && tot nix-store -q --requisites "/run/current-system/sw"
+                manager="nix-user" && tot nix-store -q --requisites "$HOME/.nix-profile"
+            fi
         ;;
 
         "AIX"| "FreeMiNT")
@@ -1390,6 +1426,7 @@ get_packages() {
 
         "Haiku")
             has "pkgman" && dir /boot/system/package-links/*
+            packages=${packages/pkgman/depot}
         ;;
 
         "IRIX")
@@ -1410,7 +1447,6 @@ get_packages() {
     fi
 
     packages="${packages/pacman-key/pacman}"
-    packages="${packages/nix-env/nix}"
 }
 
 get_shell() {
@@ -1524,6 +1560,8 @@ get_de() {
         ;;
     esac
 
+    (( "$KDE_SESSION_VERSION" >= "4" )) && de="${de/KDE/Plasma}"
+
     # Log that the function was run.
     de_run=1
 }
@@ -1592,11 +1630,12 @@ get_wm() {
     else
         case "$os" in
             "Mac OS X")
-                ps_line="$(ps -e | grep -o '[S]pectacle\|[A]methyst\|[k]wm\|[c]hun[k]wm')"
+                ps_line="$(ps -e | grep -o '[S]pectacle\|[A]methyst\|[k]wm\|[c]hun[k]wm\|[y]abai')"
 
                 case "$ps_line" in
                     *"chunkwm"*)   wm="chunkwm" ;;
                     *"kwm"*)       wm="Kwm" ;;
+                    *"yabai"*)     wm="yabai" ;;
                     *"Amethyst"*)  wm="Amethyst" ;;
                     *"Spectacle"*) wm="Spectacle" ;;
                     *)             wm="Quartz Compositor" ;;
@@ -1816,9 +1855,9 @@ get_cpu() {
                 ;;
 
                 *)
-                    cpu="$(awk -F ': | @' \
+                    cpu="$(awk -F '\\s*: | @' \
                             '/model name|Hardware|Processor|^cpu model|chip type|^cpu type/ {
-                            printf $2; exit}' "$cpu_file")"
+                            cpu=$2; if ($1 == "Hardware") exit } END { print cpu }' "$cpu_file")"
                 ;;
             esac
 
@@ -1873,8 +1912,14 @@ get_cpu() {
                 "iPhone5,"[1-4]): "Apple A6 (2) @ 1.3GHz" ;;
                 "iPhone6,"[1-2]): "Apple A7 (2) @ 1.3GHz" ;;
                 "iPhone7,"[1-2]): "Apple A8 (2) @ 1.4GHz" ;;
-                "iPhone8,"[1-4]): "Apple A9 (2) @ 1.85GHz" ;;
-                "iPhone9,"[1-4]): "Apple A10 Fusion (4) @ 2.34GHz" ;;
+                "iPhone8,"[1-4] | "iPad6,1"[12]): "Apple A9 (2) @ 1.85GHz" ;;
+                "iPhone9,"[1-4] | "iPad7,"[5-6]): "Apple A10 Fusion (4) @ 2.34GHz" ;;
+                "iPhone10,"[1-6]): "Apple A11 Bionic (6) @ 2.39GHz" ;;
+
+                "iPhone11,"[2468] | "iPad11,"[1-4])
+                    : "Apple A12 Bionic (6) @ 2.49GHz"
+                ;;
+
                 "iPod2,1"): "Samsung S5L8720 (1) @ 533MHz" ;;
                 "iPod3,1"): "Samsung S5L8922 (1) @ 600MHz" ;;
                 "iPod7,1"): "Apple A8 (2) @ 1.1GHz" ;;
@@ -1888,6 +1933,8 @@ get_cpu() {
                 "iPad5,"[3-4]): "Apple A8X (3) @ 1.5GHz" ;;
                 "iPad6,"[3-4]): "Apple A9X (2) @ 2.16GHz" ;;
                 "iPad6,"[7-8]): "Apple A9X (2) @ 2.26GHz" ;;
+                "iPad7,"[1-4]): "Apple A10X Fusion (6) @ 2.39GHz" ;;
+                "iPad8,"[1-8]): "Apple A12X Bionic (8) @ 2.49GHz" ;;
             esac
             cpu="$_"
         ;;
@@ -2096,9 +2143,9 @@ get_gpu() {
     case "$os" in
         "Linux")
             # Read GPUs into array.
-            gpu_cmd="$(lspci -mm | awk -F '\\"|\\" \\"|\\(' \
-                                          '/"Display|"3D|"VGA/ {a[$0] = $3 " " $4} END {for(i in a)
-                                           {if(!seen[a[i]]++) print a[i]}}')"
+            gpu_cmd="$(lspci -mm | awk -F '\"|\" \"|\\(' \
+                                          '/"Display|"3D|"VGA/ {a[$0] = $1 " " $3 " " $4}
+                                           END {for(i in a) {if(!seen[a[i]]++) print a[i]}}')"
             IFS=$'\n' read -d "" -ra gpus <<< "$gpu_cmd"
 
             # Remove duplicate Intel Graphics outputs.
@@ -2181,13 +2228,13 @@ get_gpu() {
 
         "iPhone OS")
             case "$kernel_machine" in
-                "iPhone1,"[1-2]): "PowerVR MBX Lite 3D" ;;
-                "iPhone5,"[1-4]): "PowerVR SGX543MP3" ;;
-                "iPhone8,"[1-4]): "PowerVR GT7600" ;;
-                "iPad3,"[1-3]):   "PowerVR SGX534MP4" ;;
-                "iPad3,"[4-6]):   "PowerVR SGX554MP4" ;;
-                "iPad5,"[3-4]):   "PowerVR GXA6850" ;;
-                "iPad6,"[3-8]):   "PowerVR 7XT" ;;
+                "iPhone1,"[1-2]):   "PowerVR MBX Lite 3D" ;;
+                "iPhone5,"[1-4]):   "PowerVR SGX543MP3" ;;
+                "iPhone11,"[2468]): "G11P" ;;
+                "iPad3,"[1-3]):     "PowerVR SGX534MP4" ;;
+                "iPad3,"[4-6]):     "PowerVR SGX554MP4" ;;
+                "iPad5,"[3-4]):     "PowerVR GXA6850" ;;
+                "iPad6,"[3-8]):     "PowerVR 7XT" ;;
 
                 "iPhone2,1" | "iPhone3,"[1-3] | "iPod3,1" | "iPod4,1" | "iPad1,1")
                     : "PowerVR SGX535"
@@ -2203,6 +2250,14 @@ get_gpu() {
 
                 "iPhone7,"[1-2] | "iPod7,1" | "iPad5,"[1-2])
                     : "PowerVR GX6450"
+                ;;
+
+                "iPhone8,"[1-4] | "iPad6,1"[12])
+                    : "PowerVR GT7600"
+                ;;
+
+                "iPhone9,"[1-4] | "iPad7,"[5-6])
+                    : "PowerVR GT7600 Plus"
                 ;;
 
                 "iPod1,1" | "iPod2,1")
@@ -2386,6 +2441,7 @@ get_song() {
         "exaile"
         "gnome-music"
         "gmusicbrowser"
+        "gogglesmm"
         "guayadeque"
         "iTunes"
         "juk"
@@ -2394,6 +2450,7 @@ get_song() {
         "mopidy"
         "mpd"
         "netease-cloud-music"
+        "plasma-browser-integration"
         "pogo"
         "pragha"
         "qmmp"
@@ -2403,9 +2460,11 @@ get_song() {
         "smplayer"
         "spotify"
         "Spotify"
+        "strawberry"
         "tomahawk"
         "vlc"
         "xmms2d"
+        "xnoise"
         "yarock"
     )
 
@@ -2452,7 +2511,11 @@ get_song() {
         "dragon"*)        get_song_dbus "dragonplayer" ;;
         "smplayer"*)      get_song_dbus "smplayer" ;;
         "rhythmbox"*)     get_song_dbus "rhythmbox" ;;
-        "netease-cloud-music"*) get_song_dbus "netease-cloud-music" ;;
+        "strawberry"*)    get_song_dbus "strawberry" ;;
+        "gogglesmm"*)     get_song_dbus "gogglesmm" ;;
+        "xnoise"*)        get_song_dbus "xnoise" ;;
+        "netease-cloud-music"*)        get_song_dbus "netease-cloud-music" ;;
+        "plasma-browser-integration"*) get_song_dbus "plasma-browser-integration" ;;
 
         "cmus"*)
             song="$(cmus-remote -Q | awk 'BEGIN { ORS=" "};
@@ -2683,8 +2746,11 @@ get_style() {
 
         # Check for general GTK2 Theme.
         if [[ -z "$gtk2_theme" ]]; then
-            if [[ -f "${GTK2_RC_FILES:-${HOME}/.gtkrc-2.0}" ]]; then
-                gtk2_theme="$(grep "^[^#]*${name}" "${GTK2_RC_FILES:-${HOME}/.gtkrc-2.0}")"
+            if [[ -n "$GTK2_RC_FILES" ]]; then
+                IFS=: read -ra rc_files <<< "$GTK2_RC_FILES"
+                gtk2_theme="$(grep "^[^#]*${name}" "${rc_files[@]}")"
+            elif [[ -f "${HOME}/.gtkrc-2.0"  ]]; then
+                gtk2_theme="$(grep "^[^#]*${name}" "${HOME}/.gtkrc-2.0")"
 
             elif [[ -f "/etc/gtk-2.0/gtkrc" ]]; then
                 gtk2_theme="$(grep "^[^#]*${name}" /etc/gtk-2.0/gtkrc)"
@@ -2694,7 +2760,7 @@ get_style() {
 
             fi
 
-            gtk2_theme="${gtk2_theme/${name}*=}"
+            gtk2_theme="${gtk2_theme/*${name}*=}"
         fi
 
         # Check for general GTK3 Theme.
@@ -2824,7 +2890,19 @@ get_term() {
             "urxvtd")          term="urxvt" ;;
             *"nvim")           term="Neovim Terminal" ;;
             *"NeoVimServer"*)  term="VimR Terminal" ;;
-            *)                 term="${name##*/}" ;;
+
+            *)
+                # Fix issues with long process names on Linux.
+                [[ $os == Linux ]] && term=$(realpath "/proc/$parent/exe")
+
+                term="${name##*/}"
+
+                # Fix wrapper names in Nix.
+                [[ $term == .*-wrapped ]] && {
+                   term="${term#.}"
+                   term="${term%-wrapped}"
+                }
+            ;;
         esac
     done
 
@@ -2923,7 +3001,8 @@ END
             kitty_config="$(kitty --debug-config)"
             [[ "$kitty_config" != *font_family* ]] && return
 
-            term_font="$(awk '/^font_family|^font_size/ {printf $2 " "}' <<< "$kitty_config")"
+            term_font="$(awk '/^font_family|^font_size/ {$1="";gsub("^ *","",$0);print $0}' \
+                         <<< "$kitty_config")"
         ;;
 
         "konsole" | "yakuake")
@@ -3311,6 +3390,11 @@ get_public_ip() {
     if type -p dig >/dev/null; then
         public_ip="$(dig +time=1 +tries=1 +short myip.opendns.com @resolver1.opendns.com)"
        [[ "$public_ip" =~ ^\; ]] && unset public_ip
+    fi
+
+    if [[ -z "$public_ip" ]] && type -p drill >/dev/null; then
+        public_ip="$(drill myip.opendns.com @resolver1.opendns.com | \
+                     awk '/^myip\./ && $3 == "IN" {print $5}')"
     fi
 
     if [[ -z "$public_ip" ]] && type -p curl >/dev/null; then
@@ -3903,13 +3987,10 @@ prin() {
         string="${2:-$1}"
         local subtitle_color="$info_color"
     fi
-    string="$(trim "${string//$'\e[0m'}")"
 
-    # Log length if it doesn't exist.
-    if [[ -z "$length" ]]; then
-        length="$(strip_sequences "$string")"
-        length="${#length}"
-    fi
+    string="$(trim "${string//$'\e[0m'}")"
+    length="$(strip_sequences "$string")"
+    length="${#length}"
 
     # Format the output.
     string="${string/:/${reset}${colon_color}${separator:=:}${info_color}}"
@@ -3926,14 +4007,14 @@ prin() {
 }
 
 get_underline() {
-    if [[ "$underline_enabled" == "on" ]]; then
+    [[ "$underline_enabled" == "on" ]] && {
         printf -v underline "%${length}s"
         printf '%b%b\n' "${text_padding:+\e[${text_padding}C}${zws}${underline_color}" \
                         "${underline// /$underline_char}${reset} "
-        unset -v length
-    fi
+    }
 
     ((++info_height))
+    length=
     prin=1
 }
 
@@ -3965,6 +4046,8 @@ trim_quotes() {
 
 strip_sequences() {
     strip="${1//$'\e['3[0-9]m}"
+    strip="${strip//$'\e['[0-9]m}"
+    strip="${strip//\\e\[[0-9]m}"
     strip="${strip//$'\e['38\;5\;[0-9]m}"
     strip="${strip//$'\e['38\;5\;[0-9][0-9]m}"
     strip="${strip//$'\e['38\;5\;[0-9][0-9][0-9]m}"
@@ -4199,11 +4282,15 @@ cache_uname() {
     kernel_machine="${uname[2]}"
 
     if [[ "$kernel_name" == "Darwin" ]]; then
-        IFS=$'\n' read -d "" -ra sw_vers < <(awk -F'<|>' '/string/ {print $3}' \
+        IFS=$'\n' read -d "" -ra sw_vers < <(awk -F'<|>' '/key|string/ {print $3}' \
                             "/System/Library/CoreServices/SystemVersion.plist")
-        darwin_name="${sw_vers[2]}"
-        osx_version="${sw_vers[3]}"
-        osx_build="${sw_vers[0]}"
+        for ((i=0;i<${#sw_vers[@]};i+=2)) {
+            case ${sw_vers[i]} in
+                ProductName)          darwin_name=${sw_vers[i+1]} ;;
+                ProductVersion)       osx_version=${sw_vers[i+1]} ;;
+                ProductBuildVersion)  osx_build=${sw_vers[i+1]}   ;;
+            esac
+        }
     fi
 }
 
@@ -6024,6 +6111,28 @@ ${c1}          /:-------------:\\
 EOF
         ;;
 
+        "Feren"*)
+            set_colors 4 7 1
+            read -rd '' ascii_data <<'EOF'
+${c1} `----------`
+ :+ooooooooo+.
+-o+oooooooooo+-
+..`/+++++++++++/...`````````````````
+   .++++++++++++++++++++++++++/////-
+    ++++++++++++++++++++++++++++++++//:`
+    -++++++++++++++++++++++++++++++/-`
+     ++++++++++++++++++++++++++++:.
+     -++++++++++++++++++++++++/.
+      +++++++++++++++++++++/-`
+      -++++++++++++++++++//-`
+        .:+++++++++++++//////-
+           .:++++++++//////////-
+             `-++++++---:::://///.
+           `.:///+++.             `
+          `.........
+EOF
+        ;;
+
         "freebsd_small")
             set_colors 1 7 3
             read -rd '' ascii_data <<'EOF'
@@ -6376,25 +6485,33 @@ WW                           W
 EOF
         ;;
 
-        "januslinux"*|"janus"*)
-            set_colors 4 7 4
+        "januslinux"*|"janus"*|"Ataraxia Linux"*|"Ataraxia"*)
+            set_colors 4 5 6 2
             read -rd '' ascii_data <<'EOF'
-${c1}oooooooooooooooooooooooooooooooo
-oooooooooooooooooooooooooooooooo
-oooooooooooooooooooooooooooooooo
-ooooooooooooo${c2}dOWWOd${c1}ooooooooooooo
-oooooooooood${c2}0WMMMMWkd${c1}ooooooooooo
-oooooooood${c2}0WMMMMMX0KN0d${c1}oooolllll
-ooooooo${c2}xKWMMMMWKxKWMMMWKx${c3}lllllll
-ooooo${c2}xXMMMMMW0doooOWMMMMMXx${c3}lllll
-ooooo${c2}xXMMMMMW0doloONMMMMMXx${c3}lllll
-ooooooo${c2}xKWMMMWXO0WMMMMMKx${c3}lllllll
-ooooooooo${c2}d0NX0KWMMMMW0d${c3}lllllllll
-oooooooooooo${c2}xWMMMMW0o${c3}llllllccccc
-oooooooooooll${c2}o0WW0o${c3}lllllcccccccc
-ooooooooooollll${c2}oo${c3}llllllccccccccc
-oooooooooollllllllllllcccccccccc
-oooooooooollllllllllllcccccccccc
+${c1}               'l:
+        loooooo
+          loooo coooool
+ looooooooooooooooooool
+  looooooooooooooooo
+         lool   cooo
+        coooooooloooooooo
+     clooooo  ;lood  cloooo
+  :loooocooo cloo      loooo
+ loooo  :ooooool       loooo
+looo    cooooo        cooooo
+looooooooooooo      ;loooooo ${c2}looooooc
+${c1}looooooooo loo   cloooooool    ${c2}looooc
+${c1} cooo       cooooooooooo       ${c2}looolooooool
+${c1}            cooo:     ${c2}coooooooooooooooooool
+                       loooooooooooolc:   loooc;
+                             cooo:    loooooooooooc
+                            ;oool         looooooo:
+                           coool          olc,
+                          looooc   ,,
+                        coooooc    loc
+                       :oooool,    coool:, looool:,
+                       looool:      ooooooooooooooo:
+                       cooolc        .ooooooooooool
 EOF
         ;;
 
@@ -7524,27 +7641,29 @@ EOF
         ;;
 
         "Peppermint"*)
-            set_colors 1 7 3
+            set_colors 1 15 3
             read -rd '' ascii_data <<'EOF'
-${c1}          8ZZZZZZ${c2}MMMMM
-${c1}       .ZZZZZZZZZ${c2}MMMMMMM.
-${c2}     MM${c1}ZZZZZZZZZ${c2}MMMMMMM${c1}ZZZZ
-${c2}   MMMMM${c1}ZZZZZZZZ${c2}MMMMM${c1}ZZZZZZZM
-${c2}  MMMMMMM${c1}ZZZZZZZ${c2}MMMM${c1}ZZZZZZZZZ.
-${c2} MMMMMMMMM${c1}ZZZZZZ${c2}MMM${c1}ZZZZZZZZZZZI
-${c2}MMMMMMMMMMM${c1}ZZZZZZ${c2}MM${c1}ZZZZZZZZZZ${c2}MMM
-${c1}.ZZZ${c2}MMMMMMMMMM${c1}IZZ${c2}MM${c1}ZZZZZ${c2}MMMMMMMMM
-${c1}ZZZZZZZ${c2}MMMMMMMM${c1}ZZ${c2}M${c1}ZZZZ${c2}MMMMMMMMMMM
-${c1}ZZZZZZZZZZZZZZZZ${c2}M${c1}Z${c2}MMMMMMMMMMMMMMM
-${c1}.ZZZZZZZZZZZZZ${c2}MMM${c1}Z${c2}M${c1}ZZZZZZZZZZ${c2}MMMM
-${c1}.ZZZZZZZZZZZ${c2}MMM${c1}7ZZ${c2}MM${c1}ZZZZZZZZZZ7${c2}M
-${c1} ZZZZZZZZZ${c2}MMMM${c1}ZZZZ${c2}MMMM${c1}ZZZZZZZ77
-${c2}  MMMMMMMMMMMM${c1}ZZZZZ${c2}MMMM${c1}ZZZZZ77
-${c2}   MMMMMMMMMM${c1}7ZZZZZZ${c2}MMMMM${c1}ZZ77
-${c2}    .MMMMMMM${c1}ZZZZZZZZ${c2}MMMMM${c1}Z7Z
-${c2}      MMMMM${c1}ZZZZZZZZZ${c2}MMMMMMM
-${c1}        NZZZZZZZZZZZ${c2}MMMMM
-${c1}           ZZZZZZZZZ${c2}MM)
+${c1}               PPPPPPPPPPPPPP
+${c1}           PPPP${c2}MMMMMMM${c1}PPPPPPPPPPP
+${c1}         PPPP${c2}MMMMMMMMMM${c1}PPPPPPPP${c2}MM${c1}PP
+${c1}       PPPPPPPP${c2}MMMMMMM${c1}PPPPPPPP${c2}MMMMM${c1}PP
+${c1}     PPPPPPPPPPPP${c2}MMMMMM${c1}PPPPPPP${c2}MMMMMMM${c1}PP
+${c1}    PPPPPPPPPPPP${c2}MMMMMMM${c1}PPPP${c2}M${c1}P${c2}MMMMMMMMM${c1}PP
+${c1}   PP${c2}MMMM${c1}PPPPPPPPPP${c2}MMM${c1}PPPPP${c2}MMMMMMM${c1}P${c2}MM${c1}PPPP
+${c1}   P${c2}MMMMMMMMMM${c1}PPPPPP${c2}MM${c1}PPPPP${c2}MMMMMM${c1}PPPPPPPP
+${c1}  P${c2}MMMMMMMMMMMM${c1}PPPPP${c2}MM${c1}PP${c2}M${c1}P${c2}MM${c1}P${c2}MM${c1}PPPPPPPPPPP
+${c1}  P${c2}MMMMMMMMMMMMMMMM${c1}PP${c2}M${c1}P${c2}MMM${c1}PPPPPPPPPPPPPPPP
+${c1}  P${c2}MMM${c1}PPPPPPPPPPPPPPPPPPPPPPPPPPPPPP${c2}MMMMM${c1}P
+${c1}  PPPPPPPPPPPPPPPP${c2}MMM${c1}P${c2}M${c1}P${c2}MMMMMMMMMMMMMMMM${c1}PP
+${c1}  PPPPPPPPPPP${c2}MM${c1}P${c2}MM${c1}PPPP${c2}MM${c1}PPPPP${c2}MMMMMMMMMMM${c1}PP
+${c1}   PPPPPPPP${c2}MMMMMM${c1}PPPPP${c2}MM${c1}PPPPPP${c2}MMMMMMMMM${c1}PP
+${c1}   PPPP${c2}MM${c1}P${c2}MMMMMMM${c1}PPPPPP${c2}MM${c1}PPPPPPPPPP${c2}MMMM${c1}PP
+${c1}    PP${c2}MMMMMMMMM${c1}P${c2}M${c1}PPPP${c2}MMMMMM${c1}PPPPPPPPPPPPP
+${c1}     PP${c2}MMMMMMM${c1}PPPPPPP${c2}MMMMMM${c1}PPPPPPPPPPPP
+${c1}       PP${c2}MMMM${c1}PPPPPPPPP${c2}MMMMMMM${c1}PPPPPPPP
+${c1}         PP${c2}MM${c1}PPPPPPPP${c2}MMMMMMMMMM${c1}PPPP
+${c1}           PPPPPPPPPP${c2}MMMMMMMM${c1}PPPP
+${c1}               PPPPPPPPPPPPPP
 EOF
         ;;
 
@@ -7834,7 +7953,7 @@ RRRR     RRRRRRRRRRRRRRRRRRR  R   RRRR
 EOF
         ;;
 
-        "Redhat"* | "Red Hat"* | "rhel"*)
+        "redhat_old")
             set_colors 1 7 3
             read -rd '' ascii_data <<'EOF'
 ${c1}             `.-..........`
@@ -7853,6 +7972,30 @@ MMM    MMMMMMMMMMMMMMyyddMMM+
  MMMM   MMMMMMMMMMMMMNdyNMMh`     hyhMMM
   MMMMMMMMMMMMMMMMyoNNNMMM+.   MMMMMMMM
    MMNMMMNNMMMMMNM+ mhsMNyyyyMNMMMMsMM
+EOF
+        ;;
+
+        "Redhat"* | "Red Hat"* | "rhel"*)
+            set_colors 1
+            read -rd '' ascii_data <<'EOF'
+${c1}           .MMM..:MMMMMMM
+          MMMMMMMMMMMMMMMMMM
+          MMMMMMMMMMMMMMMMMMMM.
+         MMMMMMMMMMMMMMMMMMMMMM
+        ,MMMMMMMMMMMMMMMMMMMMMM:
+        MMMMMMMMMMMMMMMMMMMMMMMM
+  .MMMM'  MMMMMMMMMMMMMMMMMMMMMM
+ MMMMMM    `MMMMMMMMMMMMMMMMMMMM.
+MMMMMMMM      MMMMMMMMMMMMMMMMMM .
+MMMMMMMMM.       `MMMMMMMMMMMMM' MM.
+MMMMMMMMMMM.                     MMMM
+`MMMMMMMMMMMMM.                 ,MMMMM.
+ `MMMMMMMMMMMMMMMMM.          ,MMMMMMMM.
+    MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
+      MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM:
+         MMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
+            `MMMMMMMMMMMMMMMMMMMMMMMM:
+                ``MMMMMMMMMMMMMMMMM'
 EOF
         ;;
 
@@ -7973,27 +8116,22 @@ ${c1}            ...........
 EOF
         ;;
 
-        "SailfishOS"*)
+        "Sailfish"*)
             set_colors 4 5 7 6
             read -rd '' ascii_data <<'EOF'
-${c1}              .+eWWW
-          .+ee+++eee      e.
-       .ee++eeeeeeee    +e.
-     .e++ee++eeeeeee+eee+e+
-    ee.e+.ee+eee++eeeeee+
-   W.+e.e+.e++ee+eee
-  W.+e.W.ee.W++ee'
- +e.W W.e+.W.W+
- W.e.+e.W W W.
- e e e +e.W.W
-       .W W W.
-        W.+e.W.
-         W++e.ee+.
-          ++ +ee++eeeee++.
-          '     '+++e   'ee.
-                           ee
-                            ee
-                             e
+${c1}                 _a@b
+              _#b (b
+            _@@   @_         _,
+          _#^@ _#*^^*gg,aa@^^
+          #- @@^  _a@^^
+          @_  *g#b
+          ^@_   ^@_
+            ^@_   @
+             @(b (b
+            #b(b#^
+          _@_#@^
+       _a@a*^
+   ,a@*^
 EOF
         ;;
 
@@ -8549,7 +8687,7 @@ ${c1}              ..-::::::-.`
 EOF
         ;;
 
-        "Ubuntu"*)
+        "Ubuntu"* | "i3buntu"*)
             set_colors 1 7 3
             read -rd '' ascii_data <<'EOF'
 ${c1}            .-/+oossssoo+/-.
@@ -8598,7 +8736,7 @@ ${c1}                __.;=====;.__
        _vi,    `            --+=++++:
       .uvnvi.       _._       -==+==+.
      .vvnvnI`    .;==|==;.     :|=||=|.
-${c2}+QmQQm${c1}pvvnv; ${c2}_yYsyQQWUUQQQm #QmQ#${c1}:${c2}QQQWUV$QQmL
+${c2}+QmQQm${c1}pvvnv; ${c2}_yYsyQQWUUQQQm #QmQ#${c1}:${c2}QQQWUV$QQm.
 ${c2} -QQWQW${c1}pvvo${c2}wZ?.wQQQE${c1}==<${c2}QWWQ/QWQW.QQWW${c1}(: ${c2}jQWQE
 ${c2}  -$QQQQmmU'  jQQQ@${c1}+=<${c2}QWQQ)mQQQ.mQQQC${c1}+;${c2}jWQQ@'
 ${c2}   -$WQ8Y${c1}nI:   ${c2}QWQQwgQQWV${c1}`${c2}mWQQ.jQWQQgyyWW@!
@@ -8859,8 +8997,8 @@ main() {
     eval "$config"
 
     get_args "$@"
-    get_simple "$@"
     [[ "$verbose" != "on" ]] && exec 2>/dev/null
+    get_simple "$@"
     get_distro
     get_bold
     get_distro_ascii
